@@ -1,11 +1,14 @@
 import { useEffect, useRef, useState } from 'react';
 import { useRouter } from 'next/router';
 import { useQuery } from 'react-query';
-import { httpClient } from '';
+import { noticeApi } from '@/common/api/service/notice/notice';
+import { NoticeApiResponse, NoticeItem } from '@/common/api/service/notice/dto/noticeApiDto';
+import {ApiResponse} from '@/common/api/httpClient';
+
 
 export default function Notice() {
     const router = useRouter();
-    const [noticeList, setNoticeList] = useState<any[]>([]);
+    const [noticeList, setNoticeList] = useState<NoticeItem[]>([]);
     const [loading, setLoading] = useState<boolean>(false);
     const [hasMore, setHasMore] = useState<boolean>(true);
     const [totalPages, setTotalPages] = useState<number>(1);
@@ -21,15 +24,14 @@ export default function Notice() {
             if (!hasMore) return;
 
             setLoading(true);
-            const data = await httpClient.httpGet('/notice', `offset=${page}&size=30&target=APP,SYS`);
+            const apiResponse: ApiResponse<NoticeApiResponse> | null = await noticeApi.noticeList(`offset=${page}&size=30&target=APP,SYS`);
 
-            if (data.noticeList.length === 0) {
+            if (apiResponse && apiResponse.data?.data.noticeList.length === 0) {
                 setHasMore(false);
-            } else {
-                setNoticeList((prevNoticeList) => [...prevNoticeList, ...data.noticeList]);
+            } else if (apiResponse && apiResponse.data?.data.noticeList) {
+                setNoticeList((prevNoticeList) => [...prevNoticeList, ...apiResponse.data!.data.noticeList]);
+                setTotalPages(apiResponse.data?.data.totalPages || 1);
             }
-
-            setTotalPages(data.totalPages); // 총 페이지 수 업데이트
         } catch (error) {
             console.error(error);
         } finally {
@@ -37,20 +39,11 @@ export default function Notice() {
         }
     };
 
+
     const goNoticeDetail = (id: string) => {
         router.push(`notice/noticeDetail?id=${id}`);
     };
 
-    const { data, isLoading, isError } = useQuery(['notice', page], () => httpClient.httpGet('/notice', `offset=${page}&size=30&target=APP,SYS`), {
-        enabled: hasMore,
-    });
-
-    useEffect(() => {
-        if (data) {
-            setNoticeList((prevNoticeList) => [...prevNoticeList, ...data.noticeList]);
-            setTotalPages(data.totalPages);
-        }
-    }, [data]);
 
     useEffect(() => {
         if (!isObserving.current) {
@@ -75,14 +68,12 @@ export default function Notice() {
         }
     }, [loading, hasMore]);
 
-    const getTitle = (field: any) => {
+    const getTitle = (field: string) => {
         if (field.length > 58) {
             return field.substring(0, 58) + '...';
         } else return field;
     };
 
-    if (isLoading) return <p>Loading...</p>;
-    if (isError) return <p>Error fetching data</p>;
 
     return (
         <>
@@ -90,7 +81,7 @@ export default function Notice() {
                 <div className="app-container pad4 mt-05">
                     <div className="open-main-mypage">
                         <div className="notice-List">
-                            {noticeList.map((item: any, idx: number) => (
+                            {noticeList.map((item: NoticeItem, idx: number) => (
                                 <ul key={idx}>
                                     {item.useYn ? (
                                         <li
