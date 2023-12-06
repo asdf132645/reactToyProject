@@ -5,3 +5,4 @@ import { useEffect, useState } from 'react';
 export const Default = ({ Component, pageProps }: AppProps) => {
 
 }
+
