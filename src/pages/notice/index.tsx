@@ -1,9 +1,9 @@
-import { useEffect, useRef, useState } from 'react';
+import {useEffect, useMemo, useRef, useState} from 'react';
 import { useRouter } from 'next/router';
 import { useQuery } from 'react-query';
 import { noticeApi } from '@/common/api/service/notice/notice';
 import { NoticeApiResponse, NoticeItem } from '@/common/api/service/notice/dto/noticeApiDto';
-import {ApiResponse} from '@/common/api/httpClient';
+import {ApiResponse, useQueryWithHttpClient} from '@/common/api/httpClient';
 
 
 export default function Notice() {
@@ -19,25 +19,47 @@ export default function Notice() {
 
     let page = 0;
 
-    const getNoticeData = async () => {
-        try {
-            if (!hasMore) return;
+    // 실무에서 useQuery 는 성능을 고려할 때 주로 사용 그외 아래와 같이 코드로 작성하여 사용중입니다.
 
-            setLoading(true);
-            const apiResponse: ApiResponse<NoticeApiResponse> | null = await noticeApi.noticeList(`offset=${page}&size=30&target=APP,SYS`);
+    // const getNoticeData = async () => {
+    //     try {
+    //         if (!hasMore) return;
+    //
+    //         setLoading(true);
+    //         const apiResponse: ApiResponse<NoticeApiResponse> | null = await noticeApi.noticeList(`offset=${page}&size=30&target=APP,SYS`);
+    //
+    //         if (apiResponse && apiResponse.data?.data.noticeList.length === 0) {
+    //             setHasMore(false);
+    //         } else if (apiResponse && apiResponse.data?.data.noticeList) {
+    //             setNoticeList((prevNoticeList) => [...prevNoticeList, ...apiResponse.data!.data.noticeList]);
+    //             setTotalPages(apiResponse.data?.data.totalPages || 1);
+    //         }
+    //     } catch (error) {
+    //         console.error(error);
+    //     } finally {
+    //         setLoading(false);
+    //     }
+    // };
 
-            if (apiResponse && apiResponse.data?.data.noticeList.length === 0) {
-                setHasMore(false);
-            } else if (apiResponse && apiResponse.data?.data.noticeList) {
-                setNoticeList((prevNoticeList) => [...prevNoticeList, ...apiResponse.data!.data.noticeList]);
-                setTotalPages(apiResponse.data?.data.totalPages || 1);
-            }
-        } catch (error) {
-            console.error(error);
-        } finally {
-            setLoading(false);
+
+    const { data: apiResponse, isLoading, isError } = useQueryWithHttpClient(
+        'hasMore',
+        () => noticeApi.noticeList(`offset=${page}&size=30&target=APP,SYS`),
+        {
+            enabled: hasMore, // hasMore에 따라 Query를 활성화하거나 비활성화
+            onSuccess: (response: ApiResponse<NoticeApiResponse>) => {
+                if (response?.data?.data.noticeList.length === 0) {
+                    setHasMore(false);
+                } else {
+                    setNoticeList((prevNoticeList) => [...prevNoticeList, ...response?.data!.data.noticeList]);
+                    setTotalPages(response?.data!.data.totalPages || 1);
+                }
+            },
+            onError: (error) => {
+                console.error(error);
+            },
         }
-    };
+    );
 
 
     const goNoticeDetail = (id: string) => {
@@ -54,7 +76,7 @@ export default function Notice() {
             const callback: IntersectionObserverCallback = (entries) => {
                 for (const idx of entries) {
                     if (idx.isIntersecting) {
-                        getNoticeData();
+                        setHasMore(true); // IntersectionObserver가 발동하면 hasMore를 다시 true로 설정
                         page += 1;
                     }
                 }
@@ -66,13 +88,19 @@ export default function Notice() {
                 isObserving.current = true;
             }
         }
-    }, [loading, hasMore]);
+    }, [isLoading, hasMore]);
 
-    const getTitle = (field: string) => {
-        if (field.length > 58) {
-            return field.substring(0, 58) + '...';
-        } else return field;
-    };
+
+
+    const getTitle = useMemo(
+        () => (field: string) => {
+            if (field.length > 58) {
+                return field.substring(0, 58) + '...';
+            } else return field;
+        },
+        []
+    );
+
 
 
     return (
