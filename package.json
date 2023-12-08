@@ -2,17 +2,17 @@
   "name": "mobile-app",
   "version": "1.0.0",
   "main": "index.js",
-  "repository": "https://git.sugarbricks.co.kr/dr.village/frontend/mobile-app.git",
-  "author": "kimmanjoong <enne123@sugarbricks.co.kr>",
+  "repository": "https://github.com/asdf132645/reactToyProject.git",
+  "author": "coin <amber9291@naver.com>",
   "license": "MIT",
   "private": true,
   "workspaces": [
     "component",
-    "console-app"
+    "toyProject"
   ],
   "scripts": {
-    "console:dev": "yarn workspace console-app run dev",
-    "console:build": "yarn workspace console-app run build",
+    "console:dev": "yarn workspace toyProject run dev",
+    "console:build": "yarn workspace toyProject run build",
     "storybook": "yarn workspace component storybook"
   },
   "dependencies": {
