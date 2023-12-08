@@ -63,7 +63,8 @@ export default function Notice() {
 
 
     const goNoticeDetail = (id: string) => {
-        router.push(`notice/noticeDetail?id=${id}`);
+        // 동적라우팅으로 변경
+        router.push(`notice/detail/${id}`);
     };
 
 
