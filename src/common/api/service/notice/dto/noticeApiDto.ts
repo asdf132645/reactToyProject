@@ -16,3 +16,39 @@ export interface NoticeItem {
     writtenAt: string;
     useYn: boolean;
 }
+
+export interface NoticeDetailResData {
+    id: string;
+    title: string;
+    body: string;
+    pinned: boolean;
+    target: string;
+    writerId: string;
+    useYn: boolean;
+    writerName: string;
+    writtenAt: string;
+    openedAt: string;
+    expiredAt: string | null;
+    attachmentList: [];
+}
+
+export interface NoticeDetailResponse {
+    data: {
+        noticeDetail: {
+            id: string;
+            title: string;
+            body: string;
+            pinned: boolean;
+            target: string;
+            writerId: string;
+            useYn: boolean;
+            writerName: string;
+            writtenAt: string;
+            openedAt: string;
+            expiredAt: string | null;
+            attachmentList: [];
+        };
+    };
+    code: string;
+    message: string;
+}
