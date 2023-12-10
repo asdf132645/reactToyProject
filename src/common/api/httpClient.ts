@@ -1,6 +1,8 @@
 import { useEffect, useState } from 'react';
 import axios, { AxiosError, AxiosRequestConfig } from 'axios';
-import { useQuery, UseQueryOptions } from 'react-query';
+import { useQuery, UseQueryOptions, useMutation, UseMutationOptions, MutationFunction } from 'react-query';
+
+  
 
 export interface Endpoint {
     requiresToken: boolean;
@@ -52,9 +54,7 @@ const useHttpClient = (): HttpClient => {
             let isRreturn: boolean = false;
             if (endpoint.requiresToken) {
                 isRreturn = false;
-            } else {
-                // Check expiration logic and refresh token if needed
-            }
+            } 
             return httpPostAct(endpoint, token, payload, isRreturn);
         } catch (error) {
             console.error('httpPost Error:', error);
@@ -111,11 +111,21 @@ const useHttpClient = (): HttpClient => {
     };
 };
 
-export const httpClient = useHttpClient();
-export const useQueryWithHttpClient = <T>(
+
+
+
+export const httpClient = useHttpClient(); 
+export const useQueryWithHttpClient = <T>( // get 일때 주로 사용
     key: string,
     fetchFunction: () => Promise<ApiResponse<T>>,
     options?: UseQueryOptions<ApiResponse<T>, AxiosError>
 ) => {
     return useQuery<ApiResponse<T>, AxiosError>(key, fetchFunction, options);
 };
+
+export const useMutationWithHttpClient = <T, E = AxiosError>(
+    key: string,
+    mutationFunction: (data: GenericObject) => Promise<ApiResponse<T>>,
+    options?: UseMutationOptions<ApiResponse<T>, E, GenericObject>
+  ) => useMutation<ApiResponse<T>, E, GenericObject>(key, mutationFunction, options);
+  
