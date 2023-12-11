@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState } from 'react';
+import React, {useEffect, useMemo, useRef, useState} from 'react';
 import Slider from 'react-slick';
 
 import { ApiResponse, useQueryWithHttpClient, useMutationWithHttpClient } from '@/common/api/httpClient';
@@ -59,12 +59,11 @@ export default function StaffManagement() {
         setAll(filteredAll);
 
         // 직원 데이터를 초기 데이터로부터 필터링하여 변경된 상태로 설정
-        const filteredDoctors = staffMangementList.filter((employee) => employee.job === '의사' && filterByJobClass(employee));
-        const filteredNurses = staffMangementList.filter((employee) => employee.job === '간호사' && filterByJobClass(employee));
-        const filteredTherapists = staffMangementList.filter((employee) => employee.job === '물리치료사' && filterByJobClass(employee));
-        const filteredOthers = staffMangementList.filter(
-            (employee) => (employee.job === '기타' || employee.job === null) && filterByJobClass(employee)
-        );
+        // useMemo 훅을 사용하여 staffMangementList가 변경될 때만 해당 배열이 재계산되어 성능 향상
+        const filteredDoctors = useMemo(() => staffMangementList.filter((employee) => employee.job === '의사' && employee.jobClass === 'W'), [staffMangementList]);
+        const filteredNurses = useMemo(() => staffMangementList.filter((employee) => employee.job === '간호사' && employee.jobClass === 'W'), [staffMangementList]);
+        const filteredTherapists = useMemo(() => staffMangementList.filter((employee) => employee.job === '물리치료사' && employee.jobClass === 'W'), [staffMangementList]);
+        const filteredOthers = useMemo(() => staffMangementList.filter((employee) => (employee.job === '기타' || employee.job === null) && employee.jobClass === 'W'), [staffMangementList]);
 
         setDoctors(filteredDoctors);
         setNurses(filteredNurses);
@@ -77,7 +76,7 @@ export default function StaffManagement() {
     };
 
 
-    const categories = ['전체', '의사', '간호사', '물리치료사(일반)', '기타'];
+    const categories = useMemo(() => ['전체', '의사', '간호사', '물리치료사(일반)', '기타'], []);
     const [contentSlideIndex, setContentSlideIndex] = useState(0); // 콘텐츠 슬라이드의 현재 인덱스
 
     const sliderSettings = {
@@ -111,24 +110,24 @@ export default function StaffManagement() {
         if (hidden && modal && modalContent && modalContent.contains(event.target)) {
             return;
         }
-        setHidden(false); // Close the modal
+        setHidden(false);
     };
 
 
 
-    let formDataList: any = {};
-    const currentDate = new Date();
-    const formattedDate = `${currentDate.getFullYear()}년 ${currentDate.getMonth() + 1}월 ${currentDate.getDate()}일 ${currentDate.getHours()
-        }:${currentDate.getMinutes()}`;
+    const formDataList = useMemo(() => {
+        const currentDate = new Date();
+        const formattedDate = `${currentDate.getFullYear()}년 ${currentDate.getMonth() + 1}월 ${currentDate.getDate()}일 ${currentDate.getHours()}:${currentDate.getMinutes()}`;
+        return {
+            receiver: staffPropsEmail,
+            receiverName: staffPropsName,
+            template: 'EMPLOYEE_FORM_REQUEST',
+            subject: '직원 추가',
+            link: `${location.origin}/staffMangement/addStaffSuccess`,
+            exp: formattedDate,
+        };
+    }, [staffPropsEmail, staffPropsName]);
 
-    formDataList = {
-        receiver: staffPropsEmail,
-        receiverName: staffPropsName,
-        template: 'EMPLOYEE_FORM_REQUEST',
-        subject: '직원 추가',
-        link: `${location.origin}/staffMangement/addStaffSuccess`,
-        exp: formattedDate,
-    };
 
     const { mutate } = useMutationWithHttpClient(
         '',
