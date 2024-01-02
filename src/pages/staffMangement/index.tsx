@@ -1,4 +1,5 @@
 import React, {useEffect, useMemo, useRef, useState} from 'react';
+// @ts-ignore
 import Slider from 'react-slick';
 
 import { ApiResponse, useQueryWithHttpClient, useMutationWithHttpClient } from '@/common/api/httpClient';
